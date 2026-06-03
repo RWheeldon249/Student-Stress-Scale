@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Stress Scale</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #FAF7F2;
+    --card: #FFFFFF;
+    --primary: #C17B3A;
+    --primary-dark: #8B5520;
+    --primary-light: #FDF3E7;
+    --accent: #3A6B8B;
+    --text: #2C2416;
+    --text-muted: #7A6A56;
+    --border: #E8DDD0;
+    --score-bg: #2C2416;
+    --radius: 14px;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'DM Sans', system-ui, sans-serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  /* Hero header */
+  .hero {
+    background: var(--score-bg);
+    padding: 36px 24px 32px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 70% 50%, rgba(193,123,58,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: 30px;
+    color: #FAF7F2;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .hero p {
+    font-size: 14px;
+    color: #B8A898;
+    max-width: 440px;
+    margin: 0 auto;
+    line-height: 1.6;
+    position: relative;
+  }
+
+  /* Sticky score bar */
+  #score-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--primary);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  #score-bar .score-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.8);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  #score-display {
+    font-family: var(--serif);
+    font-size: 28px;
+    color: white;
+    min-width: 60px;
+    text-align: right;
+    transition: transform 0.15s;
+  }
+  #score-display.bump {
+    transform: scale(1.2);
+  }
+  .score-bar-inner {
+    flex: 1;
+    height: 6px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 99px;
+    overflow: hidden;
+    max-width: 200px;
+  }
+  #score-bar-fill {
+    height: 100%;
+    background: white;
+    border-radius: 99px;
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  /* Main content */
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 28px 16px 0;
+  }
+
+  /* Name card */
+  .name-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .name-card label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .name-card input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: var(--sans);
+    color: var(--text);
+    background: var(--bg);
+    transition: border-color 0.2s;
+  }
+  .name-card input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: white;
+  }
+
+  /* Instructions */
+  .instructions {
+    background: var(--primary-light);
+    border: 1px solid #E8C99A;
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: var(--primary-dark);
+    line-height: 1.6;
+  }
+  .instructions strong { color: var(--primary-dark); }
+
+  /* Item rows */
+  .items-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .item-row {
+    display: grid;
+    grid-template-columns: 28px 1fr auto auto;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #F2EBE0;
+    transition: background 0.15s;
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-row.active { background: var(--primary-light); }
+
+  .item-num {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: center;
+  }
+  .item-label {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .item-score-badge {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 8px;
+    white-space: nowrap;
+  }
+  .item-row.active .item-score-badge {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  /* Stepper */
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .step-btn {
+    width: 34px;
+    height: 34px;
+    border: none;
+    background: transparent;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+    font-family: var(--sans);
+    flex-shrink: 0;
+  }
+  .step-btn:hover { background: var(--border); color: var(--text); }
+  .step-btn.minus:hover { background: #FDEAEA; color: #c0392b; }
+  .step-btn.plus:hover { background: var(--primary-light); color: var(--primary); }
+  .step-val {
+    width: 28px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    height: 34px;
+    line-height: 34px;
+  }
+  .item-row.active .stepper {
+    border-color: var(--primary);
+  }
+  .item-row.active .step-val {
+    border-color: var(--primary);
+    color: var(--primary-dark);
+  }
+
+  /* Submit area */
+  .submit-area {
+    text-align: center;
+    padding: 8px 0 0;
+  }
+  .submit-btn {
+    background: var(--score-bg);
+    color: white;
+    border: none;
+    padding: 16px 52px;
+    font-size: 17px;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: background 0.2s, transform 0.1s;
+    width: 100%;
+    max-width: 320px;
+    letter-spacing: 0.02em;
+  }
+  .submit-btn:hover { background: var(--primary-dark); }
+  .submit-btn:active { transform: scale(0.98); }
+  .submit-btn:disabled { background: #999; cursor: not-allowed; }
+
+  #status-msg {
+    margin-top: 14px;
+    font-size: 14px;
+    color: #c0392b;
+    min-height: 20px;
+  }
+
+  /* Thank you */
+  #thankyou {
+    display: none;
+    text-align: center;
+    padding: 60px 24px;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  #thankyou h2 {
+    font-family: var(--serif);
+    font-size: 30px;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  #thankyou .final-score {
+    font-family: var(--serif);
+    font-size: 64px;
+    color: var(--primary);
+    line-height: 1;
+    margin: 20px 0 8px;
+  }
+  #thankyou .score-note {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+  #thankyou p {
+    font-size: 15px;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  /* Config notice */
+  .config-notice {
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #795548;
+    margin-bottom: 20px;
+    line-height: 1.7;
+  }
+  .config-notice strong { color: #5d4037; }
+  .config-notice code { background: #fff3cd; border-radius: 4px; padding: 1px 5px; font-size: 12px; font-family: monospace; }
+
+  @media (max-width: 480px) {
+    .item-row { grid-template-columns: 22px 1fr; gap: 8px; padding: 12px 14px; }
+    .item-score-badge { display: none; }
+    .stepper { grid-column: 2; justify-self: start; margin-top: 4px; }
+    .item-row { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Student Stress Scale</h1>
+  <p>For each life event that occurred in the past 12 months, tap + to record the number of times it occurred.</p>
+</div>
+
+<div id="score-bar">
+  <span class="score-label">Running Total</span>
+  <div class="score-bar-inner"><div id="score-bar-fill"></div></div>
+  <span id="score-display">0</span>
+</div>
+
+<div class="wrap">
+
+  
+
+  <div class="name-card">
+    <label for="p-name">Your name</label>
+    <input type="text" id="p-name" name="name" placeholder="First name or initials">
+  </div>
+
+  <div class="instructions">
+    <strong>Instructions:</strong> Tap <strong>+</strong> once for each event that occurred in the past 12 months. If an event occurred more than once, tap <strong>+</strong> for each occurrence. Your total score updates automatically at the top.
+  </div>
+
+  <div class="items-card" id="items-wrap"></div>
+
+  <div class="submit-area">
+    <button class="submit-btn" id="submit-btn" onclick="handleSubmit()">Submit</button>
+    <div id="status-msg"></div>
+  </div>
+
+</div>
+
+<div id="thankyou">
+  <h2>All done!</h2>
+  <p style="color:var(--text-muted); margin-bottom:4px">Your total score</p>
+  <div class="final-score" id="final-score-display">0</div>
+  <p class="score-note">Your researcher will discuss these results with you.</p>
+  <p>Thank you for completing the Student Stress Scale. Your responses have been recorded.</p>
+</div>
+
+<script>
+const items = [
+  { id: 1,  label: "Death of a close family member",          score: 100 },
+  { id: 2,  label: "Death of a close friend",                 score: 73  },
+  { id: 3,  label: "Divorce of parents",                      score: 65  },
+  { id: 4,  label: "Jail term",                               score: 63  },
+  { id: 5,  label: "Major personal injury or illness",        score: 63  },
+  { id: 6,  label: "Marriage",                                score: 58  },
+  { id: 7,  label: "Getting fired from a job",                score: 50  },
+  { id: 8,  label: "Failing an important course",             score: 47  },
+  { id: 9,  label: "Change in the health of a family member", score: 45  },
+  { id: 10, label: "Pregnancy",                               score: 45  },
+  { id: 11, label: "Sex problems",                            score: 44  },
+  { id: 12, label: "Serious argument with a close friend",    score: 40  },
+  { id: 13, label: "Change in financial status",              score: 39  },
+  { id: 14, label: "Change in academic major",                score: 39  },
+  { id: 15, label: "Trouble with parents",                    score: 39  },
+  { id: 16, label: "New girlfriend or boyfriend",             score: 37  },
+  { id: 17, label: "Increase in workload at school",          score: 37  },
+  { id: 18, label: "Outstanding personal achievement",        score: 36  },
+  { id: 19, label: "First quarter / semester in college",     score: 36  },
+  { id: 20, label: "Change in living conditions",             score: 31  },
+  { id: 21, label: "Serious argument with an instructor",     score: 30  },
+  { id: 22, label: "Getting lower grades than expected",      score: 29  },
+  { id: 23, label: "Change in sleeping habits",               score: 29  },
+  { id: 24, label: "Change in social activities",             score: 29  },
+  { id: 25, label: "Change in eating habits",                 score: 28  },
+  { id: 26, label: "Chronic car trouble",                     score: 26  },
+  { id: 27, label: "Change in number of family get-togethers",score: 26 },
+  { id: 28, label: "Too many missed classes",                 score: 25  },
+  { id: 29, label: "Changing colleges",                       score: 24  },
+  { id: 30, label: "Dropping more than one class",            score: 23  },
+  { id: 31, label: "Minor traffic violations",                score: 20  },
+];
+
+const counts = {};
+items.forEach(item => counts[item.id] = 0);
+
+const MAX_SCORE = items.reduce((s, i) => s + i.score * 3, 0);
+
+function updateTotal() {
+  const total = items.reduce((sum, item) => sum + item.score * counts[item.id], 0);
+  const display = document.getElementById('score-display');
+  display.textContent = total;
+  display.classList.add('bump');
+  setTimeout(() => display.classList.remove('bump'), 200);
+  const pct = Math.min(total / 600 * 100, 100);
+  document.getElementById('score-bar-fill').style.width = pct + '%';
+}
+
+function buildItems() {
+  const wrap = document.getElementById('items-wrap');
+  items.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'item-row';
+    row.id = `row-${item.id}`;
+    row.innerHTML = `
+      <span class="item-num">${item.id}</span>
+      <span class="item-label">${item.label}</span>
+      <span class="item-score-badge">×${item.score}</span>
+      <div class="stepper">
+        <button class="step-btn minus" onclick="step(${item.id}, -1)" aria-label="Decrease">−</button>
+        <span class="step-val" id="val-${item.id}">0</span>
+        <button class="step-btn plus" onclick="step(${item.id}, 1)" aria-label="Increase">+</button>
+      </div>
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+function step(id, dir) {
+  counts[id] = Math.max(0, counts[id] + dir);
+  document.getElementById(`val-${id}`).textContent = counts[id];
+  const row = document.getElementById(`row-${id}`);
+  row.classList.toggle('active', counts[id] > 0);
+  updateTotal();
+}
+
+buildItems();
+
+async function handleSubmit() {
+  const btn = document.getElementById('submit-btn');
+  const status = document.getElementById('status-msg');
+  const name = document.getElementById('p-name').value.trim();
+  const total = items.reduce((sum, item) => sum + item.score * counts[item.id], 0);
+
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  status.textContent = '';
+
+  // Build data object
+  const data = { name: name || '(not provided)', total_score: total, submitted_at: new Date().toLocaleString() };
+  items.forEach(item => {
+    if (counts[item.id] > 0) {
+      data[`item_${item.id}_${item.label.replace(/[^a-zA-Z0-9]/g,'_').substring(0,30)}`] = `${counts[item.id]}x (${counts[item.id] * item.score} pts)`;
+    }
+  });
+
+  // Email body
+  const lines = ['=== STUDENT STRESS SCALE ===', `Submitted: ${data.submitted_at}`, `Name: ${name || '(not provided)'}`, `TOTAL SCORE: ${total}`, '', '--- ITEMS MARKED ---'];
+  items.forEach(item => {
+    if (counts[item.id] > 0) lines.push(`${item.label}: ${counts[item.id]}x = ${counts[item.id] * item.score} pts`);
+  });
+  if (lines.length === 6) lines.push('(no items marked)');
+
+  // ── EmailJS ──────────────────────────────────────────────
+  const EMAILJS_SERVICE_ID  = 'service_zgyd0sk';
+  const EMAILJS_TEMPLATE_ID = 'template_vkw2hgi';
+  const EMAILJS_PUBLIC_KEY  = 'UFPn4qBzBYezK2E60';
+
+  // ── Google Sheets ─────────────────────────────────────────
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwlZQ0CzeSVgt54siFUti1-Gv_bAtO8GlCBA5NYaOtrc0lUWDZHcee9cGHa-cmYGumu/exec';
+
+  const configured = EMAILJS_SERVICE_ID !== 'YOUR_SERVICE_ID' || GOOGLE_SCRIPT_URL !== 'YOUR_GOOGLE_SCRIPT_URL';
+
+  if (!configured) {
+    btn.disabled = false;
+    btn.textContent = 'Submit';
+    status.textContent = '⚠️ Please configure EmailJS and Google Sheets first (see yellow box).';
+    return;
+  }
+
+  let ok = false;
+
+  if (EMAILJS_SERVICE_ID !== 'YOUR_SERVICE_ID') {
+    try {
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        participant_name: name || 'Participant',
+        message: lines.join('\n'),
+        submitted_at: data.submitted_at,
+      }, EMAILJS_PUBLIC_KEY);
+      ok = true;
+    } catch(err) { console.error('EmailJS:', err); }
+  }
+
+  if (GOOGLE_SCRIPT_URL !== 'YOUR_GOOGLE_SCRIPT_URL') {
+    try {
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      ok = true;
+    } catch(err) { console.error('Sheets:', err); }
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Submit';
+
+  if (ok) {
+    document.getElementById('wrap') && (document.querySelector('.wrap').style.display = 'none');
+    document.querySelector('.wrap').style.display = 'none';
+    document.getElementById('score-bar').style.display = 'none';
+    document.getElementById('final-score-display').textContent = total;
+    document.getElementById('thankyou').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    status.textContent = 'Something went wrong — please try again.';
+  }
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</body>
+</html>
